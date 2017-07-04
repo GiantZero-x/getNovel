@@ -1,0 +1,19 @@
+{
+  "name": "get-novel",
+  "version": "1.0.0",
+  "description": "获取网页小说",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "novel"
+  ],
+  "author": "Gcx",
+  "license": "ISC",
+  "devDependencies": {
+    "body-parser": "^1.17.2",
+    "cors": "^2.8.3",
+    "express": "^4.15.3"
+  }
+}
