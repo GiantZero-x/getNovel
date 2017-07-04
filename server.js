@@ -6,7 +6,7 @@ var bodyParser = require('body-parser'); // 请求主体解析模块
 var fs = require('fs'); // 文件操作模块
 
 app.use(require('cors')()) // 跨域模块
-app.use(bodyParser.json()); // for parsing application/json
+app.use(bodyParser.json({ limit: '1024kb' })); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 //  小说存储路径
@@ -55,10 +55,12 @@ app.listen(80, function() {
 /**
  * 小说类
  * @param {String}  name      小说名
- * @param {String}  startPath 小说首章地址
- * @param {Boolean} isNew     是否为新
+ * @param {String}  startPath 小说首章地址 或当前location.href
+ * @param {Boolean} isNew     是否为新, 默认为新
  */
 function N(name, startPath, isNew) {
+    startPath = startPath || location.href;
+    isNew === undefined && (isNew = true);
     //  DOM暂存容器
     $(document.body).append('<div id="app" style="display:none"></div>');
     //  调用
@@ -66,6 +68,9 @@ function N(name, startPath, isNew) {
 
     //  递归函数
     function getText(url) {
+        var nextLink = url.replace(/(.+\/)(\d+)(\.html$)/, ($0, $1, $2, $3) => {
+            return $1 + (Number($2) + 1) + $3;
+        });
         $.get(url, function(res) {
             // 存入DOM容器
             $('#app').html(res.replace(/\n/g, '').replace(/<script.*\/script>/g, '').replace(/<link.*>/, ''));
@@ -96,12 +101,16 @@ function N(name, startPath, isNew) {
             console.log('当前章节: ' + titleArr, u)
 
             // 发送至本机服务器
-            $.post('http://localhost/novel', { content: content, isNew: isNew, name: name, chapter: chapter }, res => {
+            $.post('http://localhost/novel', { content: content, isNew: isNew, name: name, chapter: chapter + title }, res => {
                 isNew = false;
                 console.log('传输状态: ', res.msg);
                 // 递归调用
                 u && getText(u);
             })
+        }).fail(() => {
+            //  请求失败调取下一个链接
+            console.log('获取失败,正在请求下一个地址: ', nextLink);
+            nextLink && getText(nextLink);
         })
     }
 }
